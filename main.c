@@ -6,42 +6,6 @@
 #define ArraySize(arr) sizeof(arr) / sizeof(arr[0])
 #define ArrayEnd(arr) arr[ArraySize(arr) - 1]
 
-int ReadFileLineCount(FILE *File)
-{
-	int LineCount = 1;
-	char CurrentChar;
-
-	for (CurrentChar = getc(File); CurrentChar != EOF; CurrentChar = getc(File))
-		if (CurrentChar == '\n')
-			LineCount += 1;
-
-	// TODO fix line counts
-	fprintf(stdout, "%d lines\n", LineCount);
-	return LineCount;
-}
-
-int CheckFileExtension(const char *Filename, char **AuthorizedExtensions)
-{
-	const char *dot = strrchr(Filename, '.');
-
-	if (!dot || dot == NULL || dot == Filename)
-		return 1;
-
-	const char *Ext = dot + 1;
-
-	// TODO fix all filters ne passent pas
-	for (int i = 0; i < ArraySize(AuthorizedExtensions); ++i)
-	{
-		if (strcmp(AuthorizedExtensions[i], Ext) == 0)
-			return 0;
-		continue;
-	}
-
-	return 1;
-}
-
-// =========================MAIN===========================
-
 int main(int argc, char *argv[])
 {
 	char *DirPath = "./";
@@ -92,28 +56,47 @@ int main(int argc, char *argv[])
 		if (DirEntity->d_type == DT_REG)
 		{
 			char *CurrentFilePath = realpath(DirEntity->d_name, NULL);
+			const char *dot = strrchr(CurrentFilePath, '.');
 
-			if (CheckFileExtension(CurrentFilePath, FileExtensions) != 0)
+			if (!dot || dot == NULL || dot == CurrentFilePath)
 				continue;
 
-			FILE *CurrentFile = fopen(CurrentFilePath, "r");
+			const char *Ext = dot + 1;
 
-			if (CurrentFile == NULL)
+			for (int i = 0; i < ArraySize(FileExtensions); ++i)
 			{
-				fprintf(stderr, "CurrentFile is NULL; File path is : %s\n", CurrentFilePath);
-				exit(1);
+				if (FileExtensions[i] != NULL && strcmp(FileExtensions[i], Ext) == 0)
+				{
+					FILE *CurrentFile = fopen(CurrentFilePath, "r");
+
+					if (CurrentFile == NULL)
+					{
+						fprintf(stderr, "CurrentFile is NULL; File path is : %s\n", CurrentFilePath);
+						exit(1);
+					}
+
+					// read single file lines count
+					fprintf(stdout, "Reading %s => ", CurrentFilePath);
+
+					int LineCount = 1;
+					char CurrentChar;
+
+					for (CurrentChar = getc(CurrentFile); CurrentChar != EOF; CurrentChar = getc(CurrentFile))
+						if (CurrentChar == '\n')
+							LineCount += 1;
+
+					fprintf(stdout, "%d lines\n", LineCount);
+
+					TotalLinesCount += LineCount;
+
+					fclose(CurrentFile);
+				}
 			}
-
-			// read single file lines count
-			fprintf(stdout, "Reading %s => ", CurrentFilePath);
-			TotalLinesCount += ReadFileLineCount(CurrentFile);
-
-			fclose(CurrentFile);
 		}
 		else if (DirEntity->d_type == DT_DIR)
 		{
 			// TODO sub dirs
-			// fprintf(stdout, "%s directory not implemented\n", DirEntity->d_name);
+			fprintf(stdout, "%s directory not implemented\n", DirEntity->d_name);
 		}
 	}
 	closedir(Directory);
