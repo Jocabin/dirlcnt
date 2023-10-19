@@ -6,8 +6,41 @@
 #define ArraySize(arr) sizeof(arr) / sizeof(arr[0])
 #define ArrayEnd(arr) arr[ArraySize(arr) - 1]
 
-int ReadFileLineCount(FILE *File);
-int CheckFileExtension(const char *Filename, char **AuthorizedExtensions);
+int ReadFileLineCount(FILE *File)
+{
+	int LineCount = 1;
+	char CurrentChar;
+
+	for (CurrentChar = getc(File); CurrentChar != EOF; CurrentChar = getc(File))
+		if (CurrentChar == '\n')
+			LineCount += 1;
+
+	// TODO fix line counts
+	fprintf(stdout, "%d lines\n", LineCount);
+	return LineCount;
+}
+
+int CheckFileExtension(const char *Filename, char **AuthorizedExtensions)
+{
+	const char *dot = strrchr(Filename, '.');
+
+	if (!dot || dot == NULL || dot == Filename)
+		return 1;
+
+	const char *Ext = dot + 1;
+
+	// TODO fix all filters ne passent pas
+	for (int i = 0; i < ArraySize(AuthorizedExtensions); ++i)
+	{
+		if (strcmp(AuthorizedExtensions[i], Ext) == 0)
+			return 0;
+		continue;
+	}
+
+	return 1;
+}
+
+// =========================MAIN===========================
 
 int main(int argc, char *argv[])
 {
@@ -18,6 +51,8 @@ int main(int argc, char *argv[])
 	// get dir name by cmd arg, if not arg defined, use current dir
 	if (argv[1] != NULL)
 		DirPath = argv[1];
+
+	fprintf(stdout, "Reading directory => %s\n", DirPath);
 
 	// get all files extensions user want to count
 	if (argv[2] != NULL)
@@ -70,7 +105,7 @@ int main(int argc, char *argv[])
 			}
 
 			// read single file lines count
-			printf("Reading %s => ", CurrentFilePath);
+			fprintf(stdout, "Reading %s => ", CurrentFilePath);
 			TotalLinesCount += ReadFileLineCount(CurrentFile);
 
 			fclose(CurrentFile);
@@ -78,46 +113,13 @@ int main(int argc, char *argv[])
 		else if (DirEntity->d_type == DT_DIR)
 		{
 			// TODO sub dirs
-			printf("%s directory not implemented\n", DirEntity->d_name);
+			// fprintf(stdout, "%s directory not implemented\n", DirEntity->d_name);
 		}
 	}
 	closedir(Directory);
 
 	// output to the screen
-	printf("\nTotal Lines count : %d\n", TotalLinesCount);
+	fprintf(stdout, "\nTotal Lines count : %d\n", TotalLinesCount);
 
 	return 0;
-}
-
-int ReadFileLineCount(FILE *File)
-{
-	int LineCount = 0;
-	char CurrentChar;
-
-	for (CurrentChar = getc(File); CurrentChar != EOF; CurrentChar = getc(File))
-		if (CurrentChar == '\n')
-			LineCount += 1;
-
-	printf("%d lines\n", LineCount);
-	return LineCount;
-}
-
-int CheckFileExtension(const char *Filename, char **AuthorizedExtensions)
-{
-	const char *dot = strrchr(Filename, '.');
-
-	if (!dot || dot == NULL || dot == Filename)
-		return 1;
-
-	const char *Ext = dot + 1;
-
-	// TODO fix all filters ne passent pas
-	for (int i = 0; i < ArraySize(AuthorizedExtensions); ++i)
-	{
-		if (strcmp(AuthorizedExtensions[i], Ext) == 0)
-			return 0;
-		continue;
-	}
-
-	return 1;
 }
