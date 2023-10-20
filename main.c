@@ -2,48 +2,30 @@
 #include <stdlib.h>
 #include <dirent.h>
 #include <string.h>
+#include <unistd.h>
 
 #define ArraySize(arr) sizeof(arr) / sizeof(arr[0])
 #define ArrayEnd(arr) arr[ArraySize(arr) - 1]
 
-int main(int argc, char *argv[])
+char *FileExtensions[20] = {0};
+int TotalLinesCount = 0;
+
+void ReadDirectory(char *DirPath)
 {
-	char *DirPath = "./";
-	char *FileExtensions[20] = {0};
-	int TotalLinesCount = 0;
-
-	if (argv[1] != NULL)
-		DirPath = argv[1];
-
-	if (argv[2] != NULL)
-	{
-		char *Ext;
-		int i = 0;
-
-		while ((Ext = strsep(&argv[2], ",")) != NULL)
-		{
-			if (FileExtensions[i] == NULL)
-				FileExtensions[i] = Ext;
-			++i;
-		}
-
-		fprintf(stdout, "Extensions allowed : ");
-		for (int idx = 0; idx < ArraySize(FileExtensions); ++idx)
-		{
-			if (FileExtensions[idx] != NULL)
-				fprintf(stdout, "[%s] ", FileExtensions[idx]);
-		}
-		fprintf(stdout, "\n\n");
-	}
-
-read_dir:
 	DIR *Directory;
 	struct dirent *DirEntity;
+
+	if (chdir(realpath(DirPath, NULL)))
+	{
+		fprintf(stderr, "Can't chande to %s directory\n", DirPath);
+		exit(1);
+	}
+
 	Directory = opendir(DirPath);
 
 	if (Directory == NULL)
 	{
-		fprintf(stderr, "Directory is NULL\n");
+		fprintf(stderr, "Directory %s is NULL\n", DirPath);
 		exit(1);
 	}
 
@@ -72,7 +54,6 @@ read_dir:
 						exit(1);
 					}
 
-					// read single file lines count
 					fprintf(stdout, "Reading %s => ", CurrentFilePath);
 
 					int LineCount = 1;
@@ -95,15 +76,43 @@ read_dir:
 			if (strcmp(DirEntity->d_name, ".") == 0 || strcmp(DirEntity->d_name, "..") == 0)
 				continue;
 			// TODO prendre en compte gitignore
-			printf("DIR=%s\n", strcat(CurrentFilePath, "/"));
-			DirPath = strcat(CurrentFilePath, "/");
-			goto read_dir;
+			ReadDirectory(realpath(DirEntity->d_name, NULL));
 		}
 	}
+	chdir("..");
 	closedir(Directory);
+}
 
-	// output to the screen
+int main(int argc, char *argv[])
+{
+	char *DirPath = "./";
+
+	if (argv[1] != NULL)
+		DirPath = argv[1];
+
+	if (argv[2] != NULL)
+	{
+		char *Ext;
+		int i = 0;
+
+		while ((Ext = strsep(&argv[2], ",")) != NULL)
+		{
+			if (FileExtensions[i] == NULL)
+				FileExtensions[i] = Ext;
+			++i;
+		}
+
+		fprintf(stdout, "Extensions allowed : ");
+		for (int idx = 0; idx < ArraySize(FileExtensions); ++idx)
+		{
+			if (FileExtensions[idx] != NULL)
+				fprintf(stdout, "[%s] ", FileExtensions[idx]);
+		}
+		fprintf(stdout, "\n\n");
+	}
+
+	ReadDirectory(DirPath);
+
 	fprintf(stdout, "\nTotal Lines count : %d\n", TotalLinesCount);
-
 	return 0;
 }
