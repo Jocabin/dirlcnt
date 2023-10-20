@@ -12,13 +12,9 @@ int main(int argc, char *argv[])
 	char *FileExtensions[20] = {0};
 	int TotalLinesCount = 0;
 
-	// get dir name by cmd arg, if not arg defined, use current dir
 	if (argv[1] != NULL)
 		DirPath = argv[1];
 
-	fprintf(stdout, "Reading directory => %s\n", DirPath);
-
-	// get all files extensions user want to count
 	if (argv[2] != NULL)
 	{
 		char *Ext;
@@ -40,7 +36,7 @@ int main(int argc, char *argv[])
 		fprintf(stdout, "\n\n");
 	}
 
-	// get all files in dir
+read_dir:
 	DIR *Directory;
 	struct dirent *DirEntity;
 	Directory = opendir(DirPath);
@@ -53,9 +49,10 @@ int main(int argc, char *argv[])
 
 	while ((DirEntity = readdir(Directory)) != NULL)
 	{
+		char *CurrentFilePath = realpath(DirEntity->d_name, NULL);
+
 		if (DirEntity->d_type == DT_REG)
 		{
-			char *CurrentFilePath = realpath(DirEntity->d_name, NULL);
 			const char *dot = strrchr(CurrentFilePath, '.');
 
 			if (!dot || dot == NULL || dot == CurrentFilePath)
@@ -95,8 +92,12 @@ int main(int argc, char *argv[])
 		}
 		else if (DirEntity->d_type == DT_DIR)
 		{
-			// TODO sub dirs
-			fprintf(stdout, "%s directory not implemented\n", DirEntity->d_name);
+			if (strcmp(DirEntity->d_name, ".") == 0 || strcmp(DirEntity->d_name, "..") == 0)
+				continue;
+			// TODO prendre en compte gitignore
+			printf("DIR=%s\n", strcat(CurrentFilePath, "/"));
+			DirPath = strcat(CurrentFilePath, "/");
+			goto read_dir;
 		}
 	}
 	closedir(Directory);
