@@ -1,4 +1,4 @@
-.vscode
 dirlcnt
-main.dSYM
+*.dSYM
 temp
+.DS_Store
