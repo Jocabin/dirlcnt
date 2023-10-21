@@ -13,17 +13,19 @@ char *FileExtensions[3] = {0};
 int TotalLinesCount = 0;
 const char *BasePath = NULL;
 
-int IsFileIgnored(char *FilePath, FILE *GIFile);
-void ReadDirectory(char *DirPath, char *GitIgnoreFilePath);
+int IsFileIgnored(char *FilePath, char *GIFilePath);
+void ReadDirectory(char *DirPath, char *GIFilePath, int *FileCount);
 
 int main(int argc, char **argv)
 {
-	char *DirPath = "./";
+	char *WDPath = "./";
+	int FileCount = 0;
 
 	if (argv[1] != NULL)
-		DirPath = argv[1];
+		WDPath = argv[1];
 
-	BasePath = realpath(DirPath, NULL);
+	WDPath = realpath(WDPath, NULL);
+	BasePath = realpath(WDPath, NULL);
 
 	if (argv[2] != NULL)
 	{
@@ -44,31 +46,22 @@ int main(int argc, char **argv)
 		fprintf(stdout, "\n\n");
 	}
 
-	ReadDirectory(DirPath, realpath(argv[3], NULL));
+	char *GitIgnoreFilePath = realpath(argv[3], NULL);
+
+	ReadDirectory(WDPath, GitIgnoreFilePath, &FileCount);
 
 	fprintf(stdout, "\nTotal Lines count : %d\n", TotalLinesCount);
+	fprintf(stdout, "Files readed : %d\n", FileCount);
 	return false;
 }
 
-void ReadDirectory(char *DirPath, char *GitIgnoreFilePath)
+void ReadDirectory(char *DirPath, char *GIFilePath, int *FileCount)
 {
-	FILE *GitIgnoreFile;
-
-	if (GitIgnoreFilePath != NULL)
-	{
-		GitIgnoreFile = fopen(GitIgnoreFilePath, "r");
-
-		if (GitIgnoreFile == NULL)
-		{
-			fprintf(stderr, "Can't read the .gitignore file => %s \n", GitIgnoreFilePath);
-			exit(1);
-		}
-	}
 
 	DIR *Directory;
 	struct dirent *DirEntity;
 
-	if (chdir(realpath(DirPath, NULL)))
+	if (chdir(DirPath))
 	{
 		fprintf(stderr, "Can't move to %s directory\n", DirPath);
 		exit(1);
@@ -84,10 +77,15 @@ void ReadDirectory(char *DirPath, char *GitIgnoreFilePath)
 
 	while ((DirEntity = readdir(Directory)) != NULL)
 	{
-		if (strcmp(DirEntity->d_name, ".") == 0 || strcmp(DirEntity->d_name, "..") == 0)
+		const char *CurrentEntry = DirEntity->d_name;
+
+		if (strcmp(CurrentEntry, ".") == 0 || strcmp(CurrentEntry, "..") == 0)
 			continue;
 
-		char *CurrentFilePath = realpath(DirEntity->d_name, NULL);
+		char *CurrentFilePath = realpath(CurrentEntry, NULL);
+
+		if (IsFileIgnored(CurrentFilePath, GIFilePath) == true)
+			continue;
 
 		switch (DirEntity->d_type)
 		{
@@ -124,7 +122,7 @@ void ReadDirectory(char *DirPath, char *GitIgnoreFilePath)
 					fprintf(stdout, "%d lines\n", LineCount);
 
 					TotalLinesCount += LineCount;
-
+					*FileCount += 1;
 					fclose(CurrentFile);
 				}
 			}
@@ -132,24 +130,25 @@ void ReadDirectory(char *DirPath, char *GitIgnoreFilePath)
 		}
 		case DT_DIR:
 		{
-			if (GitIgnoreFilePath || IsFileIgnored(realpath(DirEntity->d_name, NULL), GitIgnoreFile) == false)
-				ReadDirectory(realpath(DirEntity->d_name, NULL), GitIgnoreFilePath);
+			if (GIFilePath != NULL || IsFileIgnored(realpath(DirEntity->d_name, NULL), GIFilePath) == false)
+				ReadDirectory(realpath(DirEntity->d_name, NULL), GIFilePath, FileCount);
 			break;
 		}
 		default:
 			break;
 		}
 	}
-
 	chdir("..");
 	closedir(Directory);
-
-	if (GitIgnoreFile != NULL)
-		fclose(GitIgnoreFile);
 }
 
-int IsFileIgnored(char *FilePath, FILE *GIFile)
+int IsFileIgnored(char *FilePath, char *GIFilePath)
 {
+	FILE *GIFile = fopen(GIFilePath, "r");
+
+	if (GIFile == NULL)
+		return false;
+
 	char *CurrentGILine = NULL;
 	size_t LineLength = 0;
 	ssize_t Read;
@@ -169,12 +168,16 @@ int IsFileIgnored(char *FilePath, FILE *GIFile)
 			PathToIgnore = strcat(PathToIgnore, CurrentGILine);
 
 			if (strcmp(PathToIgnore, FilePath) == 0)
+			{
+				fclose(GIFile);
 				return true;
+			}
 		}
 	}
 
 	if (CurrentGILine != NULL)
 		free(CurrentGILine);
 
+	fclose(GIFile);
 	return false;
 }
