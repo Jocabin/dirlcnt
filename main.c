@@ -88,7 +88,7 @@ void ReadDirectory(char *DirPath, char *GIFilePath, int *FileCount)
 	{
 		const char *CurrentEntry = DirEntity->d_name;
 
-		if (strcmp(CurrentEntry, ".") == 0 || strcmp(CurrentEntry, "..") == 0)
+		if (strcmp(CurrentEntry, ".") == 0 || strcmp(CurrentEntry, "..") == 0 || strcmp(CurrentEntry, ".git") == 0)
 			continue;
 
 		char *CurrentFilePath = realpath(CurrentEntry, NULL);
