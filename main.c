@@ -8,16 +8,25 @@
 #define true 1
 #define false 0
 
-// TODO change this to dynamic
-char *FileExtensions[3] = {0};
+char *FileExtensions[10] = {0};
 int TotalLinesCount = 0;
 const char *BasePath = NULL;
 
 int IsFileIgnored(char *FilePath, char *GIFilePath);
 void ReadDirectory(char *DirPath, char *GIFilePath, int *FileCount);
+void ReadFileLineCount(char *FilePath, int *FileCount);
 
 int main(int argc, char **argv)
 {
+	if (strcmp(argv[1], "help") == 0)
+	{
+		printf("HOW TO USE DIRLCNT\n\n");
+		printf("ARG_1 => Working Path. If no arguments povided, it will use the current directory\n");
+		printf("ARG_2 => Extensions list to filter. Comma separated values. Maximum of 10 values. Put \"all\" to keep count all files.\n");
+		printf("ARG_3 => .gitignore file path. If no one provided, no files will be ignored\n\n");
+		return EXIT_SUCCESS;
+	}
+
 	char *WDPath = "./";
 	int FileCount = 0;
 
@@ -47,12 +56,12 @@ int main(int argc, char **argv)
 	}
 
 	char *GitIgnoreFilePath = realpath(argv[3], NULL);
-
 	ReadDirectory(WDPath, GitIgnoreFilePath, &FileCount);
 
 	fprintf(stdout, "\nTotal Lines count : %d\n", TotalLinesCount);
 	fprintf(stdout, "Files readed : %d\n", FileCount);
-	return false;
+
+	return EXIT_SUCCESS;
 }
 
 void ReadDirectory(char *DirPath, char *GIFilePath, int *FileCount)
@@ -63,7 +72,7 @@ void ReadDirectory(char *DirPath, char *GIFilePath, int *FileCount)
 
 	if (chdir(DirPath))
 	{
-		fprintf(stderr, "Can't move to %s directory\n", DirPath);
+		perror("Can't move to directory\n");
 		exit(1);
 	}
 
@@ -71,7 +80,7 @@ void ReadDirectory(char *DirPath, char *GIFilePath, int *FileCount)
 
 	if (Directory == NULL)
 	{
-		fprintf(stderr, "Directory %s is NULL\n", DirPath);
+		perror("Directory %s is NULL\n");
 		exit(1);
 	}
 
@@ -98,34 +107,12 @@ void ReadDirectory(char *DirPath, char *GIFilePath, int *FileCount)
 
 			const char *Ext = dot + 1;
 
-			for (int i = 0; i < ArraySize(FileExtensions); ++i)
-			{
-				if (FileExtensions[i] != NULL && strcmp(FileExtensions[i], Ext) == 0)
-				{
-					FILE *CurrentFile = fopen(CurrentFilePath, "r");
-
-					if (CurrentFile == NULL)
-					{
-						fprintf(stderr, "CurrentFile is NULL; File path is : %s\n", CurrentFilePath);
-						exit(1);
-					}
-
-					fprintf(stdout, "Reading %s => ", CurrentFilePath);
-
-					int LineCount = 1;
-					char CurrentChar;
-
-					for (CurrentChar = getc(CurrentFile); CurrentChar != EOF; CurrentChar = getc(CurrentFile))
-						if (CurrentChar == '\n')
-							LineCount += 1;
-
-					fprintf(stdout, "%d lines\n", LineCount);
-
-					TotalLinesCount += LineCount;
-					*FileCount += 1;
-					fclose(CurrentFile);
-				}
-			}
+			if (strcmp(FileExtensions[0], "all") == 0)
+				ReadFileLineCount(CurrentFilePath, FileCount);
+			else
+				for (int i = 0; i < ArraySize(FileExtensions); ++i)
+					if (FileExtensions[i] != NULL && strcmp(FileExtensions[i], Ext) == 0)
+						ReadFileLineCount(CurrentFilePath, FileCount);
 			break;
 		}
 		case DT_DIR:
@@ -140,6 +127,32 @@ void ReadDirectory(char *DirPath, char *GIFilePath, int *FileCount)
 	}
 	chdir("..");
 	closedir(Directory);
+}
+
+void ReadFileLineCount(char *FilePath, int *FileCount)
+{
+	FILE *CurrentFile = fopen(FilePath, "r");
+
+	if (CurrentFile == NULL)
+	{
+		perror("Can't read file\n");
+		exit(1);
+	}
+
+	fprintf(stdout, "Reading %s => ", FilePath);
+
+	int LineCount = 1;
+	char CurrentChar;
+
+	for (CurrentChar = getc(CurrentFile); CurrentChar != EOF; CurrentChar = getc(CurrentFile))
+		if (CurrentChar == '\n')
+			LineCount += 1;
+
+	fprintf(stdout, "%d lines\n", LineCount);
+
+	TotalLinesCount += LineCount;
+	*FileCount += 1;
+	fclose(CurrentFile);
 }
 
 int IsFileIgnored(char *FilePath, char *GIFilePath)
