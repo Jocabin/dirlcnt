@@ -1,0 +1,22 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug dirlcnt",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/dirlcnt",
+            "args": [
+                "../../web/portfolio",
+                "svelte",
+                "../../web/portfolio/.gitignore"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb",
+            "preLaunchTask": "Build dirlcnt"
+        }
+    ]
+}
