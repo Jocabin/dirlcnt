@@ -1,8 +1,9 @@
 {
+    "version": "2.0.0",
     "tasks": [
         {
             "type": "cppbuild",
-            "label": "Build dirlcnt",
+            "label": "Build dbg dirlcnt",
             "command": "/opt/homebrew/opt/llvm@13/bin/clang-13",
             "args": [
                 "-fcolor-diagnostics",
@@ -18,9 +19,28 @@
             "problemMatcher": [
                 "$gcc"
             ],
-            "group": "build",
-            "detail": "Tâche générée par le débogueur."
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "detail": "compilateur : /opt/homebrew/opt/llvm@13/bin/clang-13"
+        },
+        {
+            "type": "cppbuild",
+            "label": "Build dirlcnt",
+            "command": "/opt/homebrew/opt/llvm@13/bin/clang-13",
+            "args": [
+                "${workspaceFolder}/main.c",
+                "-o",
+                "${workspaceFolder}/dirlcnt"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "group": "build"
         }
-    ],
-    "version": "2.0.0"
+    ]
 }

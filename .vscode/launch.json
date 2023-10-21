@@ -16,6 +16,23 @@
             "environment": [],
             "externalConsole": false,
             "MIMode": "lldb",
+            "preLaunchTask": "Build dbg dirlcnt"
+        },
+        {
+            "name": "Run dirlcnt",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/dirlcnt",
+            "args": [
+                "../../web/portfolio",
+                "svelte",
+                "../../web/portfolio/.gitignore"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb",
             "preLaunchTask": "Build dirlcnt"
         }
     ]
