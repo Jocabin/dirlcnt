@@ -32,7 +32,9 @@
             "args": [
                 "${workspaceFolder}/main.c",
                 "-o",
-                "${workspaceFolder}/dirlcnt"
+                "${workspaceFolder}/dirlcnt",
+                "-std=c99",
+                "-Ofast"
             ],
             "options": {
                 "cwd": "${workspaceFolder}"
