@@ -21,7 +21,6 @@
             ],
             "group": {
                 "kind": "build",
-                "isDefault": true
             },
             "detail": "compilateur : /opt/homebrew/opt/llvm@13/bin/clang-13"
         },
@@ -42,7 +41,10 @@
             "problemMatcher": [
                 "$gcc"
             ],
-            "group": "build"
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
         }
     ]
 }

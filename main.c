@@ -8,13 +8,14 @@
 #define true 1
 #define false 0
 
-char *FileExtensions[10] = {0};
-int TotalLinesCount = 0;
 const char *BasePath = NULL;
+char *FileExtensions[10] = {0};
+unsigned int TotalLinesCount = 0;
+unsigned int FileCount = 0;
 
-const int IsFileIgnored(char *FilePath, char *GIFilePath);
-void ReadDirectory(char *DirPath, char *GIFilePath, int *FileCount);
-void ReadFileLineCount(char *FilePath, int *FileCount);
+void ReadDirectory(char *DirPath, char *GIFilePath);
+void ReadFileLineCount(char *FilePath);
+const unsigned int IsFileIgnored(char *FilePath, char *GIFilePath);
 
 int main(int argc, char **argv)
 {
@@ -28,7 +29,6 @@ int main(int argc, char **argv)
 	}
 
 	char *WDPath = "./";
-	int FileCount = 0;
 
 	if (argv[1] != NULL)
 		WDPath = argv[1];
@@ -39,7 +39,7 @@ int main(int argc, char **argv)
 	if (argv[2] != NULL)
 	{
 		char *Ext;
-		int i = 0;
+		size_t i = 0;
 
 		while ((Ext = strsep(&argv[2], ",")) != NULL)
 		{
@@ -55,8 +55,7 @@ int main(int argc, char **argv)
 		fprintf(stdout, "\n\n");
 	}
 
-	char *GitIgnoreFilePath = realpath(argv[3], NULL);
-	ReadDirectory(WDPath, GitIgnoreFilePath, &FileCount);
+	ReadDirectory(WDPath, realpath(argv[3], NULL));
 
 	fprintf(stdout, "\nTotal Lines count : %d\n", TotalLinesCount);
 	fprintf(stdout, "Files readed : %d\n", FileCount);
@@ -64,7 +63,7 @@ int main(int argc, char **argv)
 	return EXIT_SUCCESS;
 }
 
-void ReadDirectory(char *DirPath, char *GIFilePath, int *FileCount)
+void ReadDirectory(char *DirPath, char *GIFilePath)
 {
 
 	DIR *Directory;
@@ -108,17 +107,17 @@ void ReadDirectory(char *DirPath, char *GIFilePath, int *FileCount)
 			const char *Ext = dot + 1;
 
 			if (strcmp(FileExtensions[0], "all") == 0)
-				ReadFileLineCount(CurrentFilePath, FileCount);
+				ReadFileLineCount(CurrentFilePath);
 			else
 				for (int i = 0; i < ArraySize(FileExtensions); ++i)
 					if (FileExtensions[i] != NULL && strcmp(FileExtensions[i], Ext) == 0)
-						ReadFileLineCount(CurrentFilePath, FileCount);
+						ReadFileLineCount(CurrentFilePath);
 			break;
 		}
 		case DT_DIR:
 		{
 			if (GIFilePath != NULL || IsFileIgnored(realpath(DirEntity->d_name, NULL), GIFilePath) == false)
-				ReadDirectory(realpath(DirEntity->d_name, NULL), GIFilePath, FileCount);
+				ReadDirectory(realpath(DirEntity->d_name, NULL), GIFilePath);
 			break;
 		}
 		default:
@@ -129,7 +128,7 @@ void ReadDirectory(char *DirPath, char *GIFilePath, int *FileCount)
 	closedir(Directory);
 }
 
-void ReadFileLineCount(char *FilePath, int *FileCount)
+void ReadFileLineCount(char *FilePath)
 {
 	FILE *CurrentFile = fopen(FilePath, "r");
 
@@ -141,8 +140,7 @@ void ReadFileLineCount(char *FilePath, int *FileCount)
 
 	fprintf(stdout, "Reading %s => ", FilePath);
 
-	int LineCount = 1;
-	char CurrentChar;
+	unsigned int LineCount = 1;
 
 	char *CurrentLine = NULL;
 	size_t LineLength = 0;
@@ -157,11 +155,11 @@ void ReadFileLineCount(char *FilePath, int *FileCount)
 	fprintf(stdout, "%d lines\n", LineCount);
 
 	TotalLinesCount += LineCount;
-	*FileCount += 1;
+	FileCount += 1;
 	fclose(CurrentFile);
 }
 
-const int IsFileIgnored(char *FilePath, char *GIFilePath)
+const unsigned int IsFileIgnored(char *FilePath, char *GIFilePath)
 {
 	FILE *GIFile = fopen(GIFilePath, "r");
 
