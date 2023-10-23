@@ -12,7 +12,7 @@ char *FileExtensions[10] = {0};
 int TotalLinesCount = 0;
 const char *BasePath = NULL;
 
-int IsFileIgnored(char *FilePath, char *GIFilePath);
+const int IsFileIgnored(char *FilePath, char *GIFilePath);
 void ReadDirectory(char *DirPath, char *GIFilePath, int *FileCount);
 void ReadFileLineCount(char *FilePath, int *FileCount);
 
@@ -68,7 +68,7 @@ void ReadDirectory(char *DirPath, char *GIFilePath, int *FileCount)
 {
 
 	DIR *Directory;
-	struct dirent *DirEntity;
+	const struct dirent *DirEntity;
 
 	if (chdir(DirPath))
 	{
@@ -161,7 +161,7 @@ void ReadFileLineCount(char *FilePath, int *FileCount)
 	fclose(CurrentFile);
 }
 
-int IsFileIgnored(char *FilePath, char *GIFilePath)
+const int IsFileIgnored(char *FilePath, char *GIFilePath)
 {
 	FILE *GIFile = fopen(GIFilePath, "r");
 
