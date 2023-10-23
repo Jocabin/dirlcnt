@@ -144,9 +144,15 @@ void ReadFileLineCount(char *FilePath, int *FileCount)
 	int LineCount = 1;
 	char CurrentChar;
 
-	for (CurrentChar = getc(CurrentFile); CurrentChar != EOF; CurrentChar = getc(CurrentFile))
-		if (CurrentChar == '\n')
-			LineCount += 1;
+	char *CurrentLine = NULL;
+	size_t LineLength = 0;
+	ssize_t Read;
+
+	while ((Read = getline(&CurrentLine, &LineLength, CurrentFile)) != -1)
+		LineCount += 1;
+
+	if (CurrentLine != NULL)
+		free(CurrentLine);
 
 	fprintf(stdout, "%d lines\n", LineCount);
 
