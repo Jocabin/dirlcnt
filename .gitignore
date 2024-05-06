@@ -1,5 +1,4 @@
-dirlcnt
-*.dSYM
-temp
+build-results/
+.idea
+.vscode
 .DS_Store
-portfolio
